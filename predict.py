@@ -7,6 +7,7 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 from torchvision import transforms
+from pathlib import Path
 import matplotlib.pyplot as plt
 
 from utils.data_loading import BasicDataset
@@ -79,6 +80,17 @@ def mask_to_image(mask: np.ndarray, mask_values):
     return Image.fromarray(out)
 
 
+def get_all_files_in_folder(folder, types, simple_sort=False):
+    files_grabbed = []
+    for t in types:
+        files_grabbed.extend(Path(folder).rglob(t))
+    if simple_sort:
+        files_grabbed = sorted(files_grabbed)
+    else:
+        files_grabbed = sorted(files_grabbed, key=lambda x: int(''.join(filter(str.isdigit, x.stem))))
+    return files_grabbed
+
+
 if __name__ == '__main__':
     args = get_args()
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -88,7 +100,9 @@ if __name__ == '__main__':
     model_path = "checkpoints/checkpoint_epoch5.pth"
     image_size = (640, 480)
 
-    in_files = [test_data_path + i for i in os.listdir(test_data_path)]
+    # in_files = [test_data_path + i for i in os.listdir(test_data_path)]
+
+    in_files = get_all_files_in_folder(test_data_path, ["*"])
 
     # in_files = args.input
     out_files = get_output_filenames(args)
@@ -130,8 +144,9 @@ if __name__ == '__main__':
             axs[1].imshow(result)
             plt.show()
 
-            # result.save(out_filename)
-            # logging.info(f'Mask saved to {out_filename}')
+            out_filename = os.path.join('data/test_masks', filename.name)
+            result.save(out_filename)
+            logging.info(f'Mask saved to {out_filename}')
 
         if args.viz:
             logging.info(f'Visualizing results for image {filename}, close to continue...')
