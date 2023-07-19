@@ -97,7 +97,7 @@ if __name__ == '__main__':
 
     test_data_path = "data/test_imgs/"
     train_data_path = "data/imgs"
-    model_path = "checkpoints/checkpoint_epoch5.pth"
+    model_path = "checkpoints/checkpoint_epoch25.pth"
     image_size = (640, 480)
 
     # in_files = [test_data_path + i for i in os.listdir(test_data_path)]
@@ -127,6 +127,7 @@ if __name__ == '__main__':
     for i, filename in enumerate(in_files):
         logging.info(f'Predicting image {filename} ...')
         img = Image.open(filename)
+        out_filename = os.path.join('data/test_masks', filename.name)
 
         mask = predict_img(net=net,
                            full_img=img,
@@ -139,13 +140,14 @@ if __name__ == '__main__':
             # out_filename = out_files[i]
             result = mask_to_image(mask, mask_values)
 
-            _, axs = plt.subplots(ncols=2)
+            fig, axs = plt.subplots(ncols=2)
             axs[0].imshow(img)
             axs[1].imshow(result)
             plt.show()
+            fig.savefig(out_filename, dpi=fig.dpi)
 
-            out_filename = os.path.join('data/test_masks', filename.name)
-            result.save(out_filename)
+
+            # result.save(out_filename)
             logging.info(f'Mask saved to {out_filename}')
 
         if args.viz:
