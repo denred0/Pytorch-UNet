@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import shutil
 
 import numpy as np
 import torch
@@ -42,6 +43,7 @@ def get_args():
     # parser.add_argument('--model', '-m', default='MODEL.pth', metavar='FILE',
     #                     help='Specify the file in which the model is stored')
     # parser.add_argument('--input', '-i', metavar='INPUT', nargs='+', help='Filenames of input images', required=True)
+    parser.add_argument('--channels', '-ch', dest='channels', metavar='B', type=int, default=3, help='channels')
     parser.add_argument('--output', '-o', metavar='OUTPUT', nargs='+', help='Filenames of output images')
     parser.add_argument('--viz', '-v', action='store_true',
                         help='Visualize the images as they are processed')
@@ -90,6 +92,11 @@ def get_all_files_in_folder(folder, types, simple_sort=False):
         files_grabbed = sorted(files_grabbed, key=lambda x: int(''.join(filter(str.isdigit, x.stem))))
     return files_grabbed
 
+def recreate_folder(path):
+    output_dir = Path(path)
+    if output_dir.exists() and output_dir.is_dir():
+        shutil.rmtree(output_dir)
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
 
 if __name__ == '__main__':
     args = get_args()
@@ -97,7 +104,7 @@ if __name__ == '__main__':
 
     test_data_path = "data/test_imgs/"
     train_data_path = "data/imgs"
-    model_path = "checkpoints/checkpoint_epoch25.pth"
+    model_path = "checkpoints/checkpoint_epoch25_npy.pth"
     image_size = (640, 480)
 
     # in_files = [test_data_path + i for i in os.listdir(test_data_path)]
@@ -107,7 +114,7 @@ if __name__ == '__main__':
     # in_files = args.input
     out_files = get_output_filenames(args)
 
-    net = UNet(n_channels=3, n_classes=args.classes, bilinear=args.bilinear)
+    net = UNet(n_channels=args.channels, n_classes=args.classes, bilinear=args.bilinear)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     # logging.info(f'Loading model {args.model}')
@@ -124,10 +131,18 @@ if __name__ == '__main__':
     is_contains = len(train_imgs.union(test_imgs)) == 0
     print("Train set contains test? ", is_contains)
 
+    output_masks_dir = 'data/test_masks'
+    recreate_folder(output_masks_dir)
+
     for i, filename in enumerate(in_files):
         logging.info(f'Predicting image {filename} ...')
-        img = Image.open(filename)
-        out_filename = os.path.join('data/test_masks', filename.name)
+        if filename.name.split('.')[1] == 'npy':
+            numpy_image = np.load(filename, allow_pickle=True)
+            img = Image.fromarray(np.uint8(numpy_image))
+            out_filename = os.path.join(output_masks_dir, f"{filename.stem}.jpg")
+        else:
+            img = Image.open(filename)
+            out_filename = os.path.join(output_masks_dir, filename.name)
 
         mask = predict_img(net=net,
                            full_img=img,
@@ -145,7 +160,6 @@ if __name__ == '__main__':
             axs[1].imshow(result)
             plt.show()
             fig.savefig(out_filename, dpi=fig.dpi)
-
 
             # result.save(out_filename)
             logging.info(f'Mask saved to {out_filename}')

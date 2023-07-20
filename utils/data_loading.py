@@ -124,5 +124,5 @@ class BasicDataset(Dataset):
 
 
 class CarvanaDataset(BasicDataset):
-    def __init__(self, images_dir, mask_dir, scale=1, image_size=(640, 480)):
-        super().__init__(images_dir, mask_dir, scale, image_size, mask_suffix='_mask')
+    def __init__(self, images_dir, mask_dir, mask_suffix, scale=1, image_size=(640, 480)):
+        super().__init__(images_dir, mask_dir, scale, image_size, mask_suffix=mask_suffix)

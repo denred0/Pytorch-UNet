@@ -36,6 +36,7 @@ def train_model(
         save_checkpoint: bool = True,
         img_scale: float = 0.5,
         image_size=(640, 480),
+        mask_suffix='_mask',
         amp: bool = False,
         weight_decay: float = 1e-8,
         momentum: float = 0.999,
@@ -43,7 +44,7 @@ def train_model(
 ):
     # 1. Create dataset
     try:
-        dataset = CarvanaDataset(dir_img, dir_mask, img_scale, image_size)
+        dataset = CarvanaDataset(dir_img, dir_mask, mask_suffix, img_scale, image_size)
     except (AssertionError, RuntimeError, IndexError):
         dataset = BasicDataset(dir_img, dir_mask, img_scale, image_size)
 
@@ -203,6 +204,8 @@ if __name__ == '__main__':
 
     # image size
     image_size = (640, 480)
+    # mask_suffix = '_mask'
+    mask_suffix = ''
 
     logging.info(f'Network:\n'
                  f'\t{model.n_channels} input channels\n'
@@ -225,6 +228,7 @@ if __name__ == '__main__':
             device=device,
             img_scale=args.scale,
             image_size=image_size,
+            mask_suffix=mask_suffix,
             val_percent=args.val / 100,
             amp=args.amp
         )
@@ -242,6 +246,7 @@ if __name__ == '__main__':
             device=device,
             img_scale=args.scale,
             image_size=image_size,
+            mask_suffix=mask_suffix,
             val_percent=args.val / 100,
             amp=args.amp
         )
